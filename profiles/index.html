@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employee Profile Form</title>
+  <!-- Include jsPDF from CDN for PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .logo { text-align: center; margin-bottom: 10px; }
+    .logo img { max-width: 150px; }
+    .centered { text-align: center; }
+    form { max-width: 800px; margin: 0 auto; }
+    .row { display: flex; align-items: flex-start; gap: 20px; }
+    .photo-box {
+      width: 180px; height: 180px;
+      border: 2px dashed #ccc;
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+    .photo-box img { max-width: 100%; max-height: 100%; }
+    .photo-input {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      opacity: 0; cursor: pointer;
+    }
+    .fields { flex: 1; }
+    .fields label { display: block; font-weight: bold; margin-top: 10px; }
+    .fields input { width: 100%; padding: 6px; margin-top: 3px; box-sizing: border-box; }
+    .section { margin-top: 20px; }
+    .section label { font-weight: bold; margin-bottom: 5px; display: block; }
+    .section textarea {
+      width: 100%; height: 80px; padding: 6px;
+      resize: vertical; box-sizing: border-box;
+      border: 1px solid #ccc;
+    }
+    .submit-btn {
+      margin-top: 20px;
+      display: block;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #00477A;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="logo">
+    <img src="thumbnail_Outlook-A blue and.png" alt="Lake Glass & Mirror Logo">
+  </div>
+  <div class="centered">
+    <label for="gc-name"><strong>General Contractor:</strong></label>
+    <input type="text" id="gc-name" name="gc-name" style="width: 300px; margin-right:20px;">
+    <label for="job-name"><strong>Job Name:</strong></label>
+    <input type="text" id="job-name" name="job-name" style="width: 300px;">
+  </div>
+  <h1 class="centered">EMPLOYEE PROFILE</h1>
+
+  <form id="profile-form">
+    <div class="row">
+      <div>
+        <div class="photo-box" id="photo-box">
+          <span>Click to add photo</span>
+          <input type="file" accept="image/*" class="photo-input" id="photo-input">
+        </div>
+      </div>
+      <div class="fields">
+        <label for="emp-name">Name</label>
+        <input type="text" id="emp-name" name="emp-name" required>
+        <label for="emp-contact">Contact Info</label>
+        <input type="text" id="emp-contact" name="emp-contact" required>
+        <label for="years-lgm">Years with LG&M</label>
+        <input type="text" id="years-lgm" name="years-lgm">
+        <label for="years-industry">Years in Industry</label>
+        <input type="text" id="years-industry" name="years-industry">
+        <label for="position">Position</label>
+        <input type="text" id="position" name="position">
+      </div>
+    </div>
+
+    <div class="section">
+      <label for="notable-jobs">Notable Jobs</label>
+      <textarea id="notable-jobs" name="notable-jobs"></textarea>
+    </div>
+    <div class="section">
+      <label for="certificates">Certificates</label>
+      <textarea id="certificates" name="certificates"></textarea>
+    </div>
+    <div class="section">
+      <label for="qualifications">Qualifications</label>
+      <textarea id="qualifications" name="qualifications"></textarea>
+    </div>
+    <div class="section">
+      <label for="other-notes">Other Notes</label>
+      <textarea id="other-notes" name="other-notes" style="height: 120px;"></textarea>
+    </div>
+
+    <button type="button" class="submit-btn" id="submit-btn">Submit</button>
+  </form>
+
+  <script>
+    const { jsPDF } = window.jspdf;
+    const photoInput = document.getElementById('photo-input');
+    const photoBox = document.getElementById('photo-box');
+    let photoDataURL = null;
+
+    photoInput.addEventListener('change', function() {
+      const file = this.files[0];
+      if (!file) return;
+      const img = document.createElement('img');
+      const reader = new FileReader();
+      reader.onload = e => {
+        photoDataURL = e.target.result;
+        img.src = photoDataURL;
+        photoBox.innerHTML = '';
+        photoBox.appendChild(img);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById('submit-btn').addEventListener('click', () => {
+      const doc = new jsPDF();
+      // Logo
+      const img = new Image();
+      img.src = 'thumbnail_Outlook-A blue and.png';
+      doc.addImage(img, 'PNG', 20, 10, 40, 40);
+      // Header
+      doc.setFontSize(12);
+      doc.text(`General Contractor: ${document.getElementById('gc-name').value}`, 70, 20);
+      doc.text(`Job Name: ${document.getElementById('job-name').value}`, 70, 28);
+      doc.setFontSize(16);
+      doc.text('EMPLOYEE PROFILE', 105, 45, null, null, 'center');
+      // Photo
+      if (photoDataURL) doc.addImage(photoDataURL, 'JPEG', 20, 55, 40, 40);
+      // Fields
+      doc.setFontSize(12);
+      let y = 55;
+      const fields = ['Name', 'Contact Info', 'Years with LG&M', 'Years in Industry', 'Position'];
+      fields.forEach((f, i) => {
+        const val = document.getElementById(`emp-${f.toLowerCase().replace(/ /g, '-')}`).value || '';
+        doc.text(`${f}: ${val}`, 70, y + (i*8));
+      });
+      y += 50;
+      // Sections
+      ['Notable Jobs', 'Certificates', 'Qualifications', 'Other Notes'].forEach((sec) => {
+        y += 10;
+        doc.setFont(undefined, 'bold');
+        doc.text(sec, 20, y);
+        doc.setFont(undefined, 'normal');
+        y += 6;
+        const text = document.getElementById(sec.toLowerCase().replace(/ /g, '-')).value || '';
+        doc.text(doc.splitTextToSize(text, 170), 20, y);
+        y += (text.split('\n').length * 6) + 4;
+      });
+      // Save PDF
+      doc.save(`Employee_Profile_${document.getElementById('emp-name').value || 'form'}.pdf`);
+      // Open mail client
+      window.location.href = `mailto:zacb@lakeglassandmirror.com?subject=Employee Profile - ${encodeURIComponent(document.getElementById('emp-name').value)}`;
+    });
+  </script>
+</body>
+</html>
